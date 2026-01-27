@@ -509,8 +509,6 @@ WHERE LOWER(g.canonical_name) = 'sangotedo';
 
 ## 7. Tradeoffs & Alternatives
 
-### Alternatives Considered
-
 ### Why Grid-Based Rounding?
 
 1. **Simplicity**: No external dependencies (vs H3)
