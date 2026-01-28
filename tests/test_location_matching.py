@@ -1,13 +1,21 @@
 """
 Tests for location matching and geo-bucket functionality.
 
+Uses PostgreSQL with PostGIS for testing (same as production).
 Run tests with: python -m pytest tests/ -v
+
+Note: Requires a running PostgreSQL database. Configure via DATABASE_URL in .env
 """
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file BEFORE importing from src
+load_dotenv()
+
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from src.main import app
 from src.database import Base, get_db
@@ -18,16 +26,20 @@ from src.services.location_service import (
 
 
 # =====================================================
-# TEST DATABASE SETUP
+# TEST DATABASE SETUP (PostgreSQL)
 # =====================================================
 
-# Use SQLite in-memory for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+# Use DATABASE_URL from .env file
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set. Check your .env file.")
 
+# Create engine for PostgreSQL
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_size=2,
+    max_overflow=5,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -47,10 +59,34 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(scope="function")
 def client():
-    """Create test client with fresh database."""
+    """Create test client with fresh database tables."""
+    # Ensure tables exist
     Base.metadata.create_all(bind=engine)
+    
+    # Clean up BEFORE test to ensure fresh state
+    with engine.connect() as conn:
+        conn.execute(text("DELETE FROM properties"))
+        conn.execute(text("DELETE FROM geo_buckets"))
+        conn.commit()
+    
     yield TestClient(app)
-    Base.metadata.drop_all(bind=engine)
+    
+    # Clean up AFTER test as well
+    with engine.connect() as conn:
+        conn.execute(text("DELETE FROM properties"))
+        conn.execute(text("DELETE FROM geo_buckets"))
+        conn.commit()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_database():
+    """
+    Setup database once before all tests.
+    Creates tables if they don't exist.
+    """
+    Base.metadata.create_all(bind=engine)
+    yield
+
 
 
 # =====================================================

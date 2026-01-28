@@ -1,11 +1,14 @@
-"""Database connection and session management."""
+"""Database connection and session management.
+
+Uses PostgreSQL with PostGIS for both production and testing.
+"""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 from src.config import settings
 
 
-# PostgreSQL/Supabase configuration
+# PostgreSQL/PostGIS configuration
 engine = create_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,

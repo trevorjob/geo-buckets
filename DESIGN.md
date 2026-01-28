@@ -571,8 +571,3 @@ properties = [
 # 1. Be assigned to the same bucket (key: "6.470_3.630")
 # 2. Be returned when searching for "sangotedo"
 ```
-
----
-
-*Document Version: 1.0*  
-*Last Updated: January 2026*
