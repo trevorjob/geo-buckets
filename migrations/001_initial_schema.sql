@@ -20,8 +20,7 @@ CREATE TABLE IF NOT EXISTS geo_buckets (
     bucket_key      VARCHAR(50) UNIQUE NOT NULL,
     canonical_name  VARCHAR(255) NOT NULL,
     
-    -- PostGIS POINT for bucket centroid (SRID 4326 = WGS84/GPS)
-    centroid        GEOMETRY(POINT, 4326) NOT NULL,
+    centroid        GEOMETRY(POINT, 4326),
     
     -- Also store as floats for simpler queries when spatial ops not needed
     centroid_lat    DOUBLE PRECISION NOT NULL,
@@ -47,8 +46,7 @@ CREATE TABLE IF NOT EXISTS properties (
     title           VARCHAR(255) NOT NULL,
     location_name   VARCHAR(255) NOT NULL,
     
-    -- PostGIS POINT for property location
-    coordinates     GEOMETRY(POINT, 4326) NOT NULL,
+    coordinates     GEOMETRY(POINT, 4326),
     
     -- Also store as floats for simpler access
     lat             DOUBLE PRECISION NOT NULL,
